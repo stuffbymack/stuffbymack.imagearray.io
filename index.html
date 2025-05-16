@@ -1,149 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Array</title>
-  <style>
-    body {
-      background: #f0f0f0;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    .main-container {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      margin: 20px;
-    }
-    .control-panel {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    fieldset {
-      margin: 10px;
-      padding: 10px;
-      border: none;
-    }
-    legend {
-      font-size: 0.9em;
-      margin-bottom: 10px;
-    }
-    #canvas {
-      background: white;
-      margin-left: 20px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    #previewCanvas {
-      background: white;
-  width: 256px; /* 1/4 of 1024 */
-  height: 256px; /* 1/4 of 1024 */
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
-  margin-top: 10px;
-}
-    button, input[type="file"] {
-      margin: 5px 0;
-      padding: 6px 12px;
-      font-size: 0.8em;
-      border: none;
-      background: #333;
-      color: #fff;
-      cursor: pointer;
-    }
-    input[type="range"] {
-      width: 100%;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="main-container">
-    <div class="control-panel">
-      <fieldset>
-        <legend>Controls</legend>
-        <input type="file" multiple id="fileInput">
-        <button onclick="generateGrid()">Generate</button>
-        <button onclick="saveGrid()">Export</button>
-        <button onclick="refreshPage()">Clear</button>
-        <button onclick="randomizeSliders()">Random</button>
-      </fieldset>
-
-      <fieldset>
-        <legend>Adjust</legend>
-        <input type="range" id="startX" min="-500" max="500" value="20">
-        <input type="range" id="startY" min="0" max="1000" value="20">
-        <input type="range" id="cellSize" min="10" max="512" value="256">
-        <input type="range" id="padding" min="0" max="500" value="20">
-      </fieldset>
-
-      <fieldset>
-      <legend>Preview</legend>
-      <canvas id="previewCanvas"></canvas>
-      </fieldset>
-    </div>
-
-    <canvas id="canvas"></canvas>
-  </div>
-
-
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Image Array</title>
+      <style>
+         body {
+         background: #edf8fc;
+         font-family: Arial, sans-serif;
+         margin: 0;
+         padding: 0;
+         }
+         .main-container {
+         display: flex;
+         justify-content: center;
+         align-items: flex-start;
+         margin: 20px;
+         }
+         .control-panel {
+         display: flex;
+         flex-direction: column;
+         align-items: flex-start;
+         }
+         fieldset {
+         margin: 10px;
+         padding: 10px;
+         border: none;
+         }
+         legend {
+         font-size: 0.9em;
+         margin-bottom: 10px;
+         }
+         .button-row {
+         display: flex;
+         gap: 10px;
+         margin-top: 5px;
+         }
+         #canvas {
+         background: white;
+         margin-left: 20px;
+         box-shadow: 0 0 5px rgba(0,0,0,0.1);
+         }
+         #previewCanvas {
+         background: white;
+         width: 256px; /* 1/4 of 1024 */
+         height: 256px; /* 1/4 of 1024 */
+         box-shadow: 0 0 5px rgba(0,0,0,0.1);
+         margin-top: 10px;
+         }
+         input[type="range"] {
+         width: 100%;
+         }
+      </style>
+   </head>
+   <body>
+      <div class="main-container">
+         <div class="control-panel">
+            <fieldset>
+               <legend>Controls</legend>
+               <input type="file" multiple id="fileInput">
+               <div class="button-row">
+                  <button onclick="saveGrid()">Export</button>
+                  <button onclick="refreshPage()">Clear</button>
+               </div>
+               <div class="button-row">
+                  <button onclick="generateGrid()">Generate</button>
+                  <button onclick="randomizeSliders()">Random</button>
+               </div>
+            </fieldset>
+            <fieldset>
+               <legend>Adjust</legend>
+               <input type="range" id="startX" min="-500" max="500" value="20">
+               <input type="range" id="startY" min="0" max="1000" value="20">
+               <input type="range" id="cellSize" min="10" max="512" value="256">
+               <input type="range" id="padding" min="0" max="500" value="20">
+            </fieldset>
+            <fieldset>
+               <legend>Preview</legend>
+               <canvas id="previewCanvas"></canvas>
+            </fieldset>
+         </div>
+         <canvas id="canvas"></canvas>
+      </div>
       <script>
          const canvas = document.getElementById("canvas");
          const ctx = canvas.getContext("2d");
          canvas.width = 1024;
          canvas.height = 1024;
-
+         
          let images = [];
-
+         
          function addImage(file) {
-  const reader = new FileReader();
-  reader.onload = function (event) {
-    const img = new Image();
-    img.onload = function () {
-      // Determine the dimensions of the square to crop
-      const size = Math.min(img.width, img.height);
-
-      // Calculate the starting x and y coordinates to center the crop
-      const startX = (img.width - size) / 2;
-      const startY = (img.height - size) / 2;
-
-      // Create an offscreen canvas and context
-      const offscreenCanvas = document.createElement("canvas");
-      offscreenCanvas.width = size;
-      offscreenCanvas.height = size;
-      const offscreenCtx = offscreenCanvas.getContext("2d");
-
-      // Draw the image onto the offscreen canvas, cropping to a square
-      offscreenCtx.drawImage(img, startX, startY, size, size, 0, 0, size, size);
-
-      // Store the cropped image
-      images.push(offscreenCanvas);
-    };
-    img.src = event.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-
+         const reader = new FileReader();
+         reader.onload = function (event) {
+         const img = new Image();
+         img.onload = function () {
+         // Determine the dimensions of the square to crop
+         const size = Math.min(img.width, img.height);
+         
+         // Calculate the starting x and y coordinates to center the crop
+         const startX = (img.width - size) / 2;
+         const startY = (img.height - size) / 2;
+         
+         // Create an offscreen canvas and context
+         const offscreenCanvas = document.createElement("canvas");
+         offscreenCanvas.width = size;
+         offscreenCanvas.height = size;
+         const offscreenCtx = offscreenCanvas.getContext("2d");
+         
+         // Draw the image onto the offscreen canvas, cropping to a square
+         offscreenCtx.drawImage(img, startX, startY, size, size, 0, 0, size, size);
+         
+         // Store the cropped image
+         images.push(offscreenCanvas);
+         };
+         img.src = event.target.result;
+         };
+         reader.readAsDataURL(file);
+         }
+         
+         
          document.getElementById("fileInput").addEventListener("change", function (e) {
             const files = e.target.files;
             for (const file of files) {
                addImage(file);
             }
          });
-
+         
          function generateGrid() {
             let gridSize = Math.ceil(Math.sqrt(images.length));
             let startX = parseInt(document.getElementById("startX").value);
             let startY = parseInt(document.getElementById("startY").value);
             let cellSize = parseInt(document.getElementById("cellSize").value);
             let padding = parseInt(document.getElementById("padding").value);
-
+         
             // White background
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+         
             for (let y = 0; y < gridSize; y++) {
                for (let x = 0; x < gridSize; x++) {
                   let index = y * gridSize + x;
@@ -153,42 +147,42 @@
                }
             }
             let previewCanvas = document.getElementById("previewCanvas");
-  let previewCtx = previewCanvas.getContext("2d");
-  previewCanvas.width = canvas.width / 4;
-  previewCanvas.height = canvas.height / 4;
-  previewCtx.scale(0.25, 0.25);
-  previewCtx.drawImage(canvas, 0, 0);
-  previewCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset the transformation matrix
+         let previewCtx = previewCanvas.getContext("2d");
+         previewCanvas.width = canvas.width / 4;
+         previewCanvas.height = canvas.height / 4;
+         previewCtx.scale(0.25, 0.25);
+         previewCtx.drawImage(canvas, 0, 0);
+         previewCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset the transformation matrix
          }
-
+         
          function saveGrid() {
             let link = document.createElement("a");
             link.setAttribute("download", "image_grid.png");
             link.setAttribute("href", canvas.toDataURL("image/png").replace("image/png", "image/octet-stream"));
             link.click();
          }
-
+         
          function refreshPage() {
             location.reload();
          }
-
+         
          function randomizeSliders() {
             document.getElementById("startX").value = Math.floor(Math.random() * 500 - 250);
             document.getElementById("startY").value = Math.floor(Math.random() * 500);
             document.getElementById("cellSize").value = Math.floor(Math.random() * (500 - 10) + 10);
             document.getElementById("padding").value = Math.floor(Math.random() * 500);
-
+         
             // Shuffle the images array
             for (let i = images.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
             [images[i], images[j]] = [images[j], images[i]];
             }
-
-        // Regenerate the grid with new settings
-        generateGrid();
-        }
-
-
+         
+         // Regenerate the grid with new settings
+         generateGrid();
+         }
+         
+         
          const sliders = ["startX", "startY", "cellSize", "padding"];
          sliders.forEach((id) => {
             document.getElementById(id).addEventListener("change", generateGrid);
