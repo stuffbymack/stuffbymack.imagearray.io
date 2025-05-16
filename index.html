@@ -57,19 +57,22 @@
       <div class="main-container">
          <div class="control-panel">
             <fieldset>
-               <legend>Controls</legend>
-               <input type="file" multiple id="fileInput">
+               <legend>Image Array</legend>
+              <input type="file" multiple id="fileInput" style="display: none;">
+                <label for="fileInput" style="display: inline-block; padding: 6px 12px; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer;">
+                    Add Images
+                </label>
                <div class="button-row">
                   <button onclick="saveGrid()">Export</button>
                   <button onclick="refreshPage()">Clear</button>
                </div>
                <div class="button-row">
-                  <button onclick="generateGrid()">Generate</button>
-                  <button onclick="randomizeSliders()">Random</button>
+                  <!-- <button onclick="generateGrid()">Generate</button> -->
+                  <button onclick="randomizeSliders()">Randomize</button>
                </div>
             </fieldset>
             <fieldset>
-               <legend>Adjust</legend>
+               <legend>Params</legend>
                <input type="range" id="startX" min="-500" max="500" value="20">
                <input type="range" id="startY" min="0" max="1000" value="20">
                <input type="range" id="cellSize" min="10" max="512" value="256">
@@ -121,11 +124,37 @@
          
          
          document.getElementById("fileInput").addEventListener("change", function (e) {
-            const files = e.target.files;
-            for (const file of files) {
-               addImage(file);
+   const files = Array.from(e.target.files);
+   let loadedCount = 0;
+
+   files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = function (event) {
+         const img = new Image();
+         img.onload = function () {
+            const size = Math.min(img.width, img.height);
+            const startX = (img.width - size) / 2;
+            const startY = (img.height - size) / 2;
+
+            const offscreenCanvas = document.createElement("canvas");
+            offscreenCanvas.width = size;
+            offscreenCanvas.height = size;
+            const offscreenCtx = offscreenCanvas.getContext("2d");
+            offscreenCtx.drawImage(img, startX, startY, size, size, 0, 0, size, size);
+
+            images.push(offscreenCanvas);
+
+            loadedCount++;
+            if (loadedCount === files.length) {
+               generateGrid(); // All images are loaded
             }
-         });
+         };
+         img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+   });
+});
+
          
          function generateGrid() {
             let gridSize = Math.ceil(Math.sqrt(images.length));
