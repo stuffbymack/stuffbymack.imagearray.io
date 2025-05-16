@@ -59,9 +59,7 @@
             <fieldset>
                <legend>Image Array</legend>
               <input type="file" multiple id="fileInput" style="display: none;">
-                <label for="fileInput" style="display: inline-block; padding: 6px 12px; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer;">
-                    Add Images
-                </label>
+              <button onclick="document.getElementById('fileInput').click()">Add Images</button>
                <div class="button-row">
                   <button onclick="saveGrid()">Export</button>
                   <button onclick="refreshPage()">Clear</button>
@@ -70,6 +68,10 @@
                   <!-- <button onclick="generateGrid()">Generate</button> -->
                   <button onclick="randomizeSliders()">Randomize</button>
                </div>
+               <div style="margin-top: 5px;">
+                <input type="checkbox" id="randomizeBg">
+                <label for="randomizeBg" style="font-size: 0.9em;">Randomize Background</label>
+                </div>
             </fieldset>
             <fieldset>
                <legend>Params</legend>
@@ -156,33 +158,43 @@
 });
 
          
-         function generateGrid() {
-            let gridSize = Math.ceil(Math.sqrt(images.length));
-            let startX = parseInt(document.getElementById("startX").value);
-            let startY = parseInt(document.getElementById("startY").value);
-            let cellSize = parseInt(document.getElementById("cellSize").value);
-            let padding = parseInt(document.getElementById("padding").value);
-         
-            // White background
-            ctx.fillStyle = "#FFFFFF";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-         
-            for (let y = 0; y < gridSize; y++) {
-               for (let x = 0; x < gridSize; x++) {
-                  let index = y * gridSize + x;
-                  if (index < images.length) {
-                     ctx.drawImage(images[index], startX + x * (cellSize + padding), startY + y * (cellSize + padding), cellSize, cellSize);
-                  }
-               }
-            }
-            let previewCanvas = document.getElementById("previewCanvas");
-         let previewCtx = previewCanvas.getContext("2d");
-         previewCanvas.width = canvas.width / 4;
-         previewCanvas.height = canvas.height / 4;
-         previewCtx.scale(0.25, 0.25);
-         previewCtx.drawImage(canvas, 0, 0);
-         previewCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset the transformation matrix
-         }
+        function generateGrid() {
+  let gridSize = Math.ceil(Math.sqrt(images.length));
+  let startX = parseInt(document.getElementById("startX").value);
+  let startY = parseInt(document.getElementById("startY").value);
+  let cellSize = parseInt(document.getElementById("cellSize").value);
+  let padding = parseInt(document.getElementById("padding").value);
+
+  const randomizeBg = document.getElementById("randomizeBg").checked;
+  let bgColor = "#FFFFFF"; // default white
+
+  if (randomizeBg) {
+    bgColor = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`;
+  }
+
+  // Set background color
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
+      let index = y * gridSize + x;
+      if (index < images.length) {
+        ctx.drawImage(images[index], startX + x * (cellSize + padding), startY + y * (cellSize + padding), cellSize, cellSize);
+      }
+    }
+  }
+
+  // Update preview
+  let previewCanvas = document.getElementById("previewCanvas");
+  let previewCtx = previewCanvas.getContext("2d");
+  previewCanvas.width = canvas.width / 4;
+  previewCanvas.height = canvas.height / 4;
+  previewCtx.scale(0.25, 0.25);
+  previewCtx.drawImage(canvas, 0, 0);
+  previewCtx.setTransform(1, 0, 0, 1, 0, 0);
+}
+
          
          function saveGrid() {
             let link = document.createElement("a");
