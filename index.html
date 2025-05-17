@@ -37,10 +37,8 @@
          margin-top: 5px;
          }
          #canvas {
-         background: white;
-         margin-left: 20px;
-         box-shadow: 0 0 5px rgba(0,0,0,0.1);
-         }
+   display: none; /* Hides canvas visually */
+}
          #previewCanvas {
          background: white;
          width: 256px; /* 1/4 of 1024 */
@@ -188,11 +186,13 @@
   // Update preview
   let previewCanvas = document.getElementById("previewCanvas");
   let previewCtx = previewCanvas.getContext("2d");
-  previewCanvas.width = canvas.width / 4;
-  previewCanvas.height = canvas.height / 4;
-  previewCtx.scale(0.25, 0.25);
-  previewCtx.drawImage(canvas, 0, 0);
-  previewCtx.setTransform(1, 0, 0, 1, 0, 0);
+ const previewScale = 0.25;
+previewCanvas.width = canvas.width * previewScale;
+previewCanvas.height = canvas.height * previewScale;
+previewCtx.setTransform(previewScale, 0, 0, previewScale, 0, 0);
+previewCtx.clearRect(0, 0, canvas.width, canvas.height); // Clear before draw
+previewCtx.drawImage(canvas, 0, 0);
+previewCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
 }
 
          
